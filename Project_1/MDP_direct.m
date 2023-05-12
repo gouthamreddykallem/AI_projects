@@ -23,24 +23,41 @@ r1 = -1; % Reward for taking action type 1
 r2 = -2; % Reward for taking action type 2
 
 % Define the transition probabilities
+
+
+r = [0.2 0.2 0.2 0.3 0.25 0.2 0.15 0.3];
+
+actions = ["^","v","<",">","^^","vv","<<",">>"];
+action_probabilities = [0.2 0.2 0.2 0.3 0.25 0.2 0.15 0.3];
+
 P = zeros(n, n, 8, n, n); % 8 possible actions
 for i = 1:n
      for j = 1:n
          % Action type 1
-         P(i, j, 1, max(1, i-d1), j) = 0.7;
-         P(i, j, 1, max(1, i-d1), max(1, j-1)) = 0.1;
-         P(i, j, 1, max(1, i-d1), min(n, j+1)) = 0.1;
-         P(i, j, 1, i, j) = 0.1;
-         % Action type 2
-         P(i, j, 2, max(1, i-d2), j) = 0.5;
-         P(i, j, 2, max(1, i-d2), max(1, j-1)) = 0.1;
-         P(i, j, 2, max(1, i-d2), min(n, j+1)) = 0.1;
-         P(i, j, 2, max(1, i-d1), j) = 0.2;
-         P(i, j, 2, i, j) = 0.1;%
+         for a=1:8
+             if(a==1)
+                 P(i, j, 1, max(1, i-d1), j) = 0.7;
+                 P(i, j, 1, max(1, i-d1), max(1, j-1)) = 0.1;
+                 P(i, j, 1, max(1, i-d1), min(n, j+1)) = 0.1;
+                 P(i, j, 1, max(1, i-d2), j) = 0.5;
+                 P(i, j, 1, max(1, i-d2), max(1, j-1)) = 0.1;
+                 P(i, j, 1, max(1, i-d2), min(n, j+1)) = 0.1;
+
+% % %              elseif(action==2)
+
+             end
+             % Action type 2
+            
+             P(i, j, 2, max(1, i-d1), j) = 0.2;
+             P(i, j, 2, i, j) = 0.1;%
+             
+
+
+             P(i, j, 1, i, j) = 0.1;
+         end
     end
  end
 
-r = [0.2 0.2 0.2 0.3 0.25 0.2 0.15 0.3];
 
 % for i=1:n
 %  
