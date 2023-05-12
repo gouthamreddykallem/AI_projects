@@ -1,65 +1,60 @@
-close all
-clear
-clc
-
 load('mnist_test.mat');
-x = test_data';
-y = test_label;
-% Set the ratio of data to use for training
-trainingRatio = 0.8;
 
-% Create a partition object for stratified random partitioning
-c = cvpartition(y,'Holdout',1-trainingRatio);
+X = double(test_data)/255;
+y = categorical(test_label);
+
+
+% Reshaping the test data
+X = reshape(X, [28, 28, 1, numel(y)]);
+
 
 % Split the data into training and testing sets
-X_train = x(c.training,:);
-y_train = categorical(y(c.training));
-X_test = x(c.test,:);
-y_test = categorical(y(c.test));
+trainingRatio = 0.8;
+c = cvpartition(numel(y),'HoldOut',1-trainingRatio);
 
-% Normalizing the input data
-X_train = double(X_train)/255;
-X_test = double(X_test)/255;
+X_train = X(:,:,:,training(c));
+y_train = y(training(c));
+X_test = X(:,:,:,test(c));
+y_test = y(test(c));
 
 
-% Reshape the input data into a 28x28x1 image format
-X_train = reshape(X_train, 28, 28, 1, []);
-X_test = reshape(X_test, 28, 28, 1, []);
-
-layers = [
+% Define the CNN architecture
+layers = [    
     imageInputLayer([28 28 1])
-    convolution2dLayer(5, 20, 'Padding', 2)
+    convolution2dLayer(5,20,'Padding',1)
     batchNormalizationLayer
     reluLayer
-    maxPooling2dLayer(2, 'Stride', 2)
-    convolution2dLayer(5, 50, 'Padding', 2)
+    maxPooling2dLayer(2,'Stride',2)
+    convolution2dLayer(5,50,'Padding',1)
     batchNormalizationLayer
-    reluLayer
-    maxPooling2dLayer(2, 'Stride', 2)
+    maxPooling2dLayer(2,'Stride',2)
     fullyConnectedLayer(500)
     reluLayer
+    dropoutLayer(0.5)
     fullyConnectedLayer(10)
     softmaxLayer
     classificationLayer
-];
+    ];
 
-% Specify the training options
+% Train the CNN
 options = trainingOptions('sgdm', ...
-    'MaxEpochs', 10, ...
-    'InitialLearnRate', 0.0001, ...
-    'Verbose', true, ...
-    'Plots', 'training-progress');
+    'MaxEpochs',3, ...
+    'InitialLearnRate',0.01, ...
+    'MiniBatchSize',128, ...
+    'ExecutionEnvironment','auto', ...
+    'Shuffle','every-epoch', ...
+    'ValidationData',{X_test,y_test}, ...
+    'ValidationFrequency',30, ...
+    'Plots','training-progress');
 
-% Train the CNN using the specified options
-net = trainNetwork(X_train, y_train, layers, options);
+net = trainNetwork(X_train,y_train,layers,options);
 
-% Evaluate the trained CNN on the test set
-
-y_pred = classify(net, X_test);
-accuracy = sum(y_pred == y_test) / numel(y_test);
-fprintf('Test accuracy = %0.4f\n', accuracy*100);
+% Test the CNN
+YPred = classify(net,X_test);
+accuracy = sum(YPred == y_test)/numel(y_test);
+fprintf('Test Accuracy: %.2f%%\n', accuracy*100);
 
 % Plot the confusion matrix
 figure;
-plotconfusion(y_test, y_pred);
+plotconfusion(y_test, YPred);
 

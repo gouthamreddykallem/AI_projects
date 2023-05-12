@@ -11,69 +11,97 @@ disp(maze);
 
 
 gamma = 0.9;    % discount factor
-epsilon = 0.001;  % stopping criterion
-reward1 = 100;  % reward for reaching the goal
-reward2 = -10;  % penalty for hitting a wall
-p1 = 0.7;       % probability of sliding in first direction (d=1)
-p2 = 0.1;       % probability of sliding in second direction (d=1)
-p3 = 0.1;       % probability of sliding in third direction (d=1)
-p4 = 0.1;       % probability of staying in same cell (d=1)
-q1 = 0.5;       % probability of sliding in first direction (d=2)
-q2 = 0.1;       % probability of sliding in second direction (d=2)
-q3 = 0.1;       % probability of sliding in third direction (d=2)
-q4 = 0.2;       % probability of sliding in fourth direction (d=2)
-r1 = -1;        % reward for taking a step (d=1)
-r2 = -2; 
+penalty = -10;  % penalty for hitting a wall
+
+
+actions = ["^","v","<",">","^^","vv","<<",">>"];
+action_probabilities = [0.2 0.2 0.2 0.3 0.25 0.2 0.15 0.3];
+
+stay = 0.1;
+
+r1 = 1;         % reward for taking a step (d=1)
+r2 = 2;         % reward for taking a step (d=2)
+
+prob = zeros(n,n,length(actions));
+
+
+for i = 1:num_iterations
+    % For each state in the maze
+    for x = 1:size(maze,1)
+        for y = 1:size(maze,2)
+            % If the state is not a wall
+            if maze(x,y) == -1
+                % Calculate the value of the state under the current policy
+                for a=1:length(actions)
+                    prob(x,y,a) = action_probabilities(a) + discount * sum(sum(policy(x,y)*V));
+                end
+            end
+        end
+    end
+end
+
+
+
+
+
+for i=1:n
+
+    for j=1:n
+
+        
+        for a = 1:length(actions)
+            prob(i,j,a) = getProbs(a,maze,i,j,n,action_probabilities);
+        end
+        
+
+    end
+end
 
 
 V = zeros(n*n, 1);
 policy = zeros(n*n, 1);
 
-% Perform value iteration
-delta = inf;
+% Perform model training
 epoches = 1000;
-while epoches > 0
-    delta = 0;
+for i=1:epoches
     for s = 1:n*n
         v = V(s);
         Q = zeros(1, 4);
-        for a = 1:4
-            [next_state, reward] = get_transition_prob(s, a, maze, p1, p2, p3, r1, r2);
+        for a = 1:length(actions)
+            [next_state, reward] = get_rewards(s, actions(a), maze, p1, p2, p3, r1, r2);
             Q(a) = reward + gamma * V(next_state);
         end
         [V(s), policy(s)] = max(Q);
-        delta = max(delta, abs(v - V(s)));
     end
-%     if(delta > epsilon)
-%          break;
-%      end
-    epoches = epoches - 1;
 end
 
-% Print policy
-disp("Optimal policy:");
-disp(reshape(policy, n, n)');
-optPolicy = reshape(policy, n, n)';
-% Print value function
-disp("Value function:");
-disp(reshape(V, n, n)');
-valFun = reshape(V, n, n)';
+
+optPolicy = reshape(policy, n, n);
+valFun = reshape(V, n, n);
+
 
 figure(1);
-subplot(1,3,1);
+subplot(1,2,1);
 imagesc(maze);
 title("Maze");
-subplot(1,3,2);
-imagesc(optPolicy);
-title("optimal Policy");
-subplot(1,3,3);
+subplot(1,2,2);
 imagesc(valFun);
 title("Value function");
+disp(valFun);
 
 
 
 
-function [next_state, reward] = get_transition_prob(state, action, maze, p1, p2, p3, r1, r2)
+
+% subplot(1,3,3);
+% imagesc(optPolicy);
+% title("optimal Policy");
+
+
+
+
+
+function [next_state, reward] = get_rewards(state, action, maze, p1, p2, p3, r1, r2)
     % Computes the next state and reward given the current state and action
         % Initialize next state and reward
         next_state = state;
@@ -81,109 +109,107 @@ function [next_state, reward] = get_transition_prob(state, action, maze, p1, p2,
         [n, ~] = size(maze);
         [row, col] = ind2sub([n, n], state);
         % Compute next state and reward for d=1
-        if action == 1     % up
+        if action == "^"     % up
             if row == 1
                 next_state = state;
                 reward = r2;
             else
                 if col == 1 || col == n
                     next_state = sub2ind([n, n], row-1, col);
-                    reward = maze(row-1, col);
+                    reward =  getReward(maze,row-1, col);                    
                 else
                     r = rand();
                     if r < p1
                         next_state = sub2ind([n, n], row-1, col);
-                        reward = maze(row-1, col);
+                        reward = getReward(maze,row-1, col);
                     elseif r < p1 + p2
                         next_state = sub2ind([n, n], row-1, col-1);
-                        reward = maze(row-1, col-1);
+                        reward = getReward(maze,row-1, col-1);
                     elseif r < p1 + p2 + p3
                         next_state = sub2ind([n, n], row-1, col+1);
-                        reward = maze(row-1, col+1);
+                        reward = getReward(maze,row-1, col+1);
                     else
                         next_state = state;
                         reward = r1;
                     end
                 end
             end
-            elseif action == 2 % down
+            elseif action == "v" % down
                 if row == n
                     next_state = state;
                     reward = r2;
                 else
                     if col == 1 || col == n
                         next_state = sub2ind([n, n], row+1, col);
-                        reward = maze(row+1, col);
+                        reward = getReward(maze,row+1, col);
                     else
                         r = rand();
                         if r < p1
                             next_state = sub2ind([n, n], row+1, col);
-                            reward = maze(row+1, col);
+                            reward = getReward(maze,row+1, col);
                         elseif r < p1 + p2
                             next_state = sub2ind([n, n], row+1, col-1);
-                            reward = maze(row+1, col-1);
+                            reward = getReward(maze,row+1, col-1);
                         elseif r < p1 + p2 + p3
                             next_state = sub2ind([n, n], row+1, col+1);
-                            reward = maze(row+1, col+1);
+                            reward = getReward(maze,row+1, col+1);
                         else
                             next_state = state;
                             reward = r1;
                         end
                     end
                 end
-                elseif action == 3 % left
+                elseif action == "<" % left
                     if col == 1
                         next_state = state;
                         reward = r2;
                     else
                         if row == 1 || row == n
                             next_state = sub2ind([n, n], row, col-1);
-                            reward = maze(row, col-1);
+                            reward = getReward(maze,row, col-1);
                         else
                             r = rand();
                             if r < p1
                                 next_state = sub2ind([n, n], row, col-1);
-                                reward = maze(row, col-1);
+                                reward = getReward(maze,row, col-1);
                             elseif r < p1 + p2
                                 next_state = sub2ind([n, n], row-1, col-1);
-                                reward = maze(row-1, col-1);
+                                reward = getReward(maze,row-1, col-1);
                             elseif r < p1 + p2 + p3
                                 next_state = sub2ind([n, n], row+1, col-1);
-                                reward = maze(row+1, col-1);
+                                reward = getReward(maze,row+1, col-1);
                             else
                                 next_state = state;
                                 reward = r1;
                             end
                         end
                     end
-                    elseif action == 4
+                    elseif action == ">"
                         if col == n
                             next_state = state;
                             reward = r2;
                         else
                             if row == 1 || row == n
                                 next_state = sub2ind([n, n], row, col+1);
-                                reward = maze(row, col+1);
+                                reward = getReward(maze,row, col+1);
                             else
                                 r = rand();
                                 if r < p1
                                     next_state = sub2ind([n, n], row, col+1);
-                                    reward = maze(row, col+1);
+                                    reward = getReward(maze,row, col+1);
                                 elseif r < p1 + p2
                                     next_state = sub2ind([n, n], row-1, col+1);
-                                    reward = maze(row-1, col+1);
+                                    reward = getReward(maze,row-1, col+1);
                                 elseif r < p1 + p2 + p3
                                     next_state = sub2ind([n, n], row+1, col+1);
-                                    reward = maze(row+1, col+1);
+                                    reward = getReward(maze,row+1, col+1);
                                 else
                                     next_state = state;
                                     reward = r1;
                                 end
                             end
                         end
-
         end
-        
 end
 
 
@@ -200,3 +226,48 @@ function [robotLocation,destinationLocation] = findSourceAndTraget(maze)
         end
     end
 end
+
+
+function [reward] = getReward(maze,i,j)
+    wall = -1;
+    penalty = -10;
+    if(maze(i,j)==wall)
+        reward = penalty;
+    else
+        reward = maze(i, j);
+    end
+
+end
+
+function [prob] = getProbs(action,maze,i,j,n,action_probabilities)
+
+if(action==1)
+
+    if(i-1<1)
+        prob = 0;
+    else
+        prob = checkWall(action,maze,i-1,j,action_probabilities);
+    end
+
+end
+
+
+end
+
+
+
+
+function [prob] = checkWall(action,maze,i,j,action_probabilities)
+    wall = -1;
+    penalty = 0;
+    reward = 100;
+    if(maze(i,j)==wall)
+        prob = penalty;
+    elseif(maze(i,j)==reward)
+        prob=1;
+    else
+        prob = action_probabilities(action);
+    end
+
+end
+

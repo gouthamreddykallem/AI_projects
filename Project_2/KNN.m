@@ -14,36 +14,44 @@ trainingRatio = 0.8;
 c = cvpartition(y,'Holdout',1-trainingRatio);
 
 % Split the data into training and testing sets
-X_train = x(c.training,:);
-y_train = y(c.training);
-X_test = x(c.test,:);
-y_test = y(c.test);
-
-
-
-
-
+X_train = double(x(c.training,:));
+y_train = double(y(c.training));
+X_test = double(x(c.test,:));
+y_test = double(y(c.test));
 
 train_data = (X_train)/255;
 test_data = (X_test)/255;
 
 
-k = 1;
-[predictions, accuracy] = knn(train_data, y_train, test_data, y_test, k);
-fprintf('Accuracy with k=%d: %f\n', k, accuracy);
+Ks = [1, 3, 5];
 
-% Test the k-nearest neighbors algorithm with k=5
-k = 5;
-[predictions, accuracy] = knn(train_data, y_train, test_data, y_test, k);
-fprintf('Accuracy with k=%d: %f\n', k, accuracy);
 
-% Compute confusion matrix
-C = confusionmat(y_test, predictions);
-disp('Confusion matrix:');
-disp(C);
+for k =1:length(Ks)
+
+[predictions, accuracy] = knn(train_data, y_train, test_data, y_test, k);
+fprintf('Accuracy with k:%d is = %f\n', k, accuracy*100);    
 
 figure;
 plotconfusion(categorical(y_test), categorical(predictions));
+
+end
+
+% k = 1;
+% [predictions, accuracy] = knn(train_data, y_train, test_data, y_test, k);
+% fprintf('Accuracy with k=%d: %f\n', k, accuracy*100);
+% 
+% % Test the k-nearest neighbors algorithm with k=5
+% % k = 5;
+% % [predictions, accuracy] = knn(train_data, y_train, test_data, y_test, k);
+% % fprintf('Accuracy with k=%d: %f\n', k, accuracy*100);
+% 
+% % Compute confusion matrix
+% C = confusionmat(y_test, predictions);
+% disp('Confusion matrix:');
+% disp(C);
+% 
+% figure;
+% plotconfusion(categorical(y_test), categorical(predictions));
 
 
 
