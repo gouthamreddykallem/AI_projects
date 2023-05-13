@@ -29,10 +29,11 @@ Ks = [1, 3, 5];
 for k =1:length(Ks)
 
 [predictions, accuracy] = knn(train_data, y_train, test_data, y_test, k);
-fprintf('Accuracy with k:%d is = %f\n', k, accuracy*100);    
+fprintf('Accuracy with k:%d is = %f\n', Ks(k), accuracy*100);    
 
 figure;
 plotconfusion(categorical(y_test), categorical(predictions));
+title(Ks(k))
 
 end
 

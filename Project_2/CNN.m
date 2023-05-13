@@ -19,7 +19,7 @@ y_test = y(test(c));
 
 
 % Define the CNN architecture
-layers = [    
+layers = [
     imageInputLayer([28 28 1])
     convolution2dLayer(5,20,'Padding',1)
     batchNormalizationLayer

@@ -19,6 +19,7 @@ X_test = double(x(c.test,:));
 y_test = double(y(c.test));
 
 
+
 train_data = (X_train)/255;
 test_data = (X_test)/255;
 % train_labels = y_train;
@@ -30,7 +31,7 @@ output_size = 10; % number of classes
 hidden_sizes = [50, 100, 200]; % different numbers of hidden units
 activation_fn = @sigmoid;
 learning_rate = 0.1;
-num_epochs = 5;
+num_epochs = 100;
 batch_size = 100;
 
 % Initialize the weights and biases randomly
@@ -74,16 +75,6 @@ for h = 1:length(hidden_sizes)
             W1 = W1 - learning_rate*batch_data'*delta1;
             b1 = b1 - learning_rate*sum(delta1, 1);
         end
-
-        % Evaluate the performance on the test set
-%         z1 = test_data*W1 + b1;
-%         a1 = activation_fn(z1);
-%         z2 = a1*W2 + b2;
-%         output = softmax(z2);
-%         [~, predicted_labels] = max(output, [], 2);
-%         confusion = confusionmat(y_test, predicted_labels);
-%         accuracy = sum(diag(confusion))/sum(confusion(:));
-%         fprintf('Hidden units: %d, Epoch: %d, Accuracy: %.2f%%\n', hidden_size, epoch, accuracy*100);
     end
 
 
@@ -93,23 +84,17 @@ z4 = a1*W2 + b2;
 y_pred = softmax(z4);
 [ ~,y_pred] = max(y_pred, [], 2);
 [y_test, ~] = max(y_test, [], 2);
-% accuracy = sum(y_pred == test_labels)/length(test_labels);
 
 accuracy = sum(y_pred == y_test) / numel(y_test);
 
 fprintf('Accuracy with hidden unit %d is = %0.4f\n',  hidden_size,  accuracy*100);
 
+figure;
+plotconfusion(categorical(y_test), categorical(y_pred));
+title(hidden_size);
 
 end
 
-
-figure;
-plotconfusion(categorical(y_test), categorical(y_pred));
-
-% Computing the confusion matrix
-C = confusionmat(y_test, y_pred);
-disp("Confusion Matrix:");
-disp(C);
 
 function s = sigmoid(x)
      s = 1 ./ (1 + exp(-x));
