@@ -19,14 +19,13 @@ reward_low = 0; % Low reward for hitting a wall
 % Define the action parameters
 d1 = 1; % Distance for action type 1
 d2 = 2; % Distance for action type 2
-r1 = -1; % Reward for taking action type 1
-r2 = -2; % Reward for taking action type 2
 
 % Define the transition probabilities
 
 
 actions = ["^","v","<",">","^^","vv","<<",">>"];
-action_probabilities = [0.2 0.2 0.2 0.3 0.25 0.2 0.15 0.3];
+action_probabilities = [0.5 0.2 0.3 0.4 0.25 0.2 0.15 0.3];
+
 
 
 % Define the transition function
@@ -93,16 +92,76 @@ while delta > epsilon
 end
 
 
+
+
+
+
+V(destinationLocation(1),destinationLocation(2)) = 100;
+% Find the path to the high reward position using the value function
+pos = robotLocation; % starting position
+path = [pos];
+i=2;
+while ~(pos(1)==destinationLocation(1) & pos(2) == destinationLocation(2)) % until we reach the high reward position
+    % Calculate the expected future rewards of all possible actions
+%     up = V(pos(1)-1,pos(2));
+    if pos(1) > 1
+        up = V(pos(1)-1,pos(2));
+    else
+        up = -inf; 
+    end
+%     down = V(pos(1)+1,pos(2));
+    if pos(1) < size(V,1)
+        down = V(pos(1)+1,pos(2));
+    else
+        down = -inf; 
+    end
+    if pos(2) > 1
+        left = V(pos(1),pos(2)-1);
+    else
+        left = -inf; 
+    end
+%     right = V(pos(1),pos(2)+1);
+    if pos(2) < size(V,2)
+        right = V(pos(1),pos(2)+1);
+    else
+        right = -inf; 
+    end
+    % Choose the action that leads to the state with the highest value
+    [~,action] = max([up,down,left,right]);
+    disp(action);
+    % Move to the new position
+    if action == 1
+        pos(1) = pos(1)-1;
+    elseif action == 2
+        pos(1) = pos(1)+1;
+    elseif action == 3
+        pos(2) = pos(2)-1;
+    else
+        pos(2) = pos(2)+1;
+    end
+    disp(pos);
+    % Add the new position to the path
+    path = [path; pos];
+end
+
+% Show the maze and the path using imagesc
+figure
 figure(1);
 subplot(1,3,1);
 imagesc(maze);
 title("Maze");
 subplot(1,3,2);
-imagesc(R);
-title("Reward matrix");
-subplot(1,3,3);
 imagesc(V);
 title("Value function");
+subplot(1,3,3);
+imagesc(maze)
+title("Path followed");
+hold on
+plot(path(:,2),path(:,1),'r','LineWidth',2)
+
+
+
+
 
 
 % Define a function to get the next state given an action
@@ -155,6 +214,8 @@ function [robotLocation,destinationLocation] = findSourceAndTraget(maze)
         end
     end
 end
+
+
 
 % 
 % 
